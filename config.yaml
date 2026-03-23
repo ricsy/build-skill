@@ -1,0 +1,73 @@
+# build-skill/config.yaml
+#
+# 配置说明：
+# - 所有相对路径均相对于 skills/<skill_name>/ 目录
+# - file_copy_rules 中的 from 支持 glob 模式（* 和 **）
+# - config_patches 使用正则行级替换，保留 YAML 注释
+
+# ============ build ============
+# 构建阶段相关配置
+build:
+  skills_dir: "skills"       # skill 源码根目录（CLI 执行时的工作目录）
+  default_skill: ""          # 空字符串则 CLI 必须传 --name；非空则作为自动推断的 skill 名
+  output_dir: "dist"         # 打包输出目录
+
+# ============ debug ============
+# 调试输出相关配置
+debug:
+  enabled: false             # 是否开启调试输出（CLI --debug 参数可覆盖）
+  log_level: "INFO"          # 日志级别：DEBUG / INFO / WARNING / ERROR
+
+# ============ pack ============
+# 打包阶段相关配置
+pack:
+  # 打包时排除的文件模式（glob 格式）
+  # - * 匹配任意字符，** 匹配路径分隔符
+  # - 如 "*.pyc" 会排除所有 .pyc 文件
+  exclude_patterns:
+    - "__pycache__"         # Python 缓存目录
+    - "*.pyc"               # Python 编译文件
+    - ".DS_Store"           # macOS 文件夹属性
+    - "*.egg-info"           # Python 包元数据
+    - ".git"                # Git 仓库
+
+  # 打包时强制注入到 skill 的 config.yaml（行级正则替换）
+  # 用于覆盖 skill 内的默认配置，如关闭调试、修改路径等
+  config_patches:
+    debug:
+      enabled: "false"      # 强制关闭调试模式
+      log_level: INFO       # 强制设置日志级别
+
+  # 文件复制规则列表（按顺序执行）
+  # - from:  源路径（相对于 skills/<name>/）
+  # - to:    目标路径（默认为 from 相同）
+  # - glob:  可选，from 为目录时使用 glob 过滤文件（不支持 ** 递归）
+  # 复制行为：
+  #   - from 是文件 → 直接复制到 to
+  #   - from 是目录 → 整个目录复制到 to
+  #   - from + glob → 目录内匹配 glob 的文件复制到 to
+  # 支持 .. 相对路径（如 ../scripts/*.service）
+  file_copy_rules:
+    - from: "src"        # 源码目录
+      to: "scripts/src"  # 复制到 scripts/src
+    - from: "requirements.txt"   # 单文件，直接复制到根目录
+    - from: "config.yaml"        # 单文件，直接复制到根目录
+
+  # 版本号读取配置（全局默认，可被 skill_version_overrides 覆盖）
+  version_file: "__init__.py"  # 版本文件名称（相对于 skills/<name>/）
+  version_regex: "__version__\\s*=\\s*[\"']([^\"']+)[\"']"  # 提取版本号的正则，需有 1 个捕获组
+
+  # per-skill 版本配置覆盖（key 为 skill 名称）
+  # 单独指定 version_file 或 version_regex，缺失则继承全局配置
+  # skill_version_overrides:
+  #   my-skill:
+  #     version_file: "pyproject.toml"
+  #     version_regex: 'version\\s*=\\s*["\\']([^"\\']+)["\\']'
+
+# ============ validation ============
+# SKILL.md frontmatter 校验相关配置
+validation:
+  name_max_len: 64           # skill 名称最大长度
+  desc_max_len: 1024         # 描述字段最大长度
+  compat_max_len: 500        # 兼容性字段最大长度
+  skill_file_max_lines: 500  # SKILL.md 最大行数

@@ -1,73 +1,11 @@
 name: 发布到 PyPI
 
-# 仅在 GitHub Release 发布（Published）时触发，而非每次 push tag
 on:
   release:
     types: [published]
 
-# 安全原则：最小权限
-permissions:
-  contents: read  # 仅需读取代码仓库内容
-
 jobs:
-  # --------------------------------------------------
-  # 第一阶段：构建发布包
-  # --------------------------------------------------
-  release-build:
+  release:
     runs-on: ubuntu-latest
-
     steps:
-      # 检出代码（默认获取完整 commit 历史）
-      - uses: actions/checkout@v4
-
-      # 设置 Python 环境（3.x = 最新稳定版）
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.x"
-
-      # 构建源码包（sdist）和 wheel 包
-      - name: 构建发布包
-        run: |
-          # 安装构建工具 hatchling
-          python -m pip install build
-          # 执行构建，产物输出到 dist/ 目录
-          python -m build
-
-      # 将构建产物上传为 artifact（临时存储，供下一 job 使用）
-      - name: 上传构建产物
-        uses: actions/upload-artifact@v4
-        with:
-          name: release-dists       # artifact 名称
-          path: dist/               # 上传 dist/ 目录下的所有文件
-
-  # --------------------------------------------------
-  # 第二阶段：发布到 PyPI
-  # --------------------------------------------------
-  pypi-publish:
-    runs-on: ubuntu-latest
-    needs:
-      - release-build               # 依赖上一 job，必须构建完成后执行
-    permissions:
-      # 信任发布必须开启 id-token（OIDC 动态认证，无需密码）
-      id-token: write
-
-    # 发布环境配置（建议在 GitHub 仓库 Settings → Environments 中设置保护规则）
-    environment:
-      name: pypi
-      # 发布成功后显示的 PyPI 项目链接
-      url: https://pypi.org/project/build-skill/
-
-    steps:
-      # 从上一 job 下载 artifact（同一 workflow 内共享）
-      - name: 下载构建产物
-        uses: actions/download-artifact@v4
-        with:
-          name: release-dists
-          path: dist/
-
-      # 使用 pypa/gh-action-pypi-publish 上传至 PyPI
-      # 配合 Trusted Publishing（OIDC）自动获取认证，无需 secrets
-      - name: 发布到 PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          packages-dir: dist/       # 指定要上传的包目录
+      - uses: ricsy/shared-actions/.github/actions/pypi@main

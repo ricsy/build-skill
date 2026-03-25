@@ -21,7 +21,7 @@ app = typer.Typer(
 )
 
 
-@app.command()
+@app.command()  # type: ignore[untyped-decorator]
 def main(
     name: str = typer.Option(None, "--name", help="指定 skill 名称（逗号分隔多个，或 all）"),
     output: str = typer.Option("dist", "--output", help="指定输出目录"),

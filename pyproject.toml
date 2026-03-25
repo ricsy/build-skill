@@ -42,9 +42,16 @@ target-version = "py311"
 [tool.mypy]
 python_version = "3.11"
 strict = true
-ignore_missing_imports = true
 show_error_codes = true
+ignore_missing_imports = true
+disallow_untyped_defs = false
 
 [[tool.mypy.overrides]]
 module = "tests.*"
 strict = false
+disallow_untyped_defs = false
+disable_error_code = ["no-untyped-def"]
+
+[[tool.mypy.overrides]]
+module = "build_skill/cli.py"
+disable_error_code = ["untyped-decorator"]

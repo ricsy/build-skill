@@ -138,10 +138,10 @@ class TestFileCopyRuleValidator:
 
     def test_resolve_to_with_type_and_to(self, tmp_path):
         """type + to 组合解析正确"""
-        rule = FileCopyRule(from_="src", type="scripts", to="lib")
+        rule = FileCopyRule.model_validate({"from": "src", "type": "scripts", "to": "lib"})
         assert rule.resolve_to() == "scripts/lib"
 
     def test_resolve_to_with_type_only(self, tmp_path):
         """仅有 type 时解析为 type 本身"""
-        rule = FileCopyRule(from_="src", type="scripts")
+        rule = FileCopyRule.model_validate({"from": "src", "type": "scripts"})
         assert rule.resolve_to() == "scripts"

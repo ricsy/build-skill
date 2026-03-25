@@ -42,29 +42,32 @@ pack:
   # - from:  源路径（自动相对于 skills/<name>/ 的上两级，即项目根目录）
   #         用户只需写 "src"，不用写 "../../"
   #         内部实际解析为 skills/<name>/../../from
-  # - type:  顶层目录（必须在 validation.directory_scope 白名单内），与 to 组合生成完整路径 type/to
-  #         type 存在时：完整路径为 type/to（to 省略则用 from_ 作为子路径）
-  #         type 不存在时：完整路径为 to（原行为）
-  # - to:    子路径（相对于 type），省略时使用 from_ 的名称
+  # - type:  顶层目录（必填，必须在 validation.directory_scope 白名单内）
+  #         作为目标路径的顶层目录
+  # - to:    子路径（可选，相对于 type）
+  #         to 有值时：完整路径为 type/to
+  #         to 无值时：
+  #           - 文件：完整路径为 type（文件名保持 from 的名称）
+  #           - 目录：完整路径为 type
   # - glob:  可选，from 为目录时使用 glob 过滤文件（不支持 ** 递归）
   # 复制行为：
-  #   - from 是文件 → 复制到 type/to
-  #   - from 是目录 → 复制到 type/to；若 to 已存在则合并内容
-  #   - from + glob → 目录内匹配 glob 的文件复制到 type/to
+  #   - from 是文件 → 复制到 type/文件名
+  #   - from 是目录 → 复制到 type/目录名；若 type 已存在则合并内容
+  #   - from + glob → 目录内匹配 glob 的文件复制到 type/目录名
   # 示例（skills/<name>/ 在项目根目录下）：
   #   项目根目录/（即 CWD，build-skill 运行目录）
-  #     ├── src/              ← 源码，用 from: "src"（自动解析到 skills/<name>/../../src）
+  #     ├── src/              ← 源码目录
   #     ├── config.yaml
   #     └── skills/
   #         └── <name>/
   #             ├── SKILL.md
   #             └── __init__.py
   file_copy_rules:
-    - from: "src"        # 源码目录（skills/<name>/../../src = 项目根目录/src/）
-      type: "scripts"     # 顶层目录在 directory_scope 白名单内
-      to: "src"           # 子路径（type/to = scripts/src）
+    - from: "src"        # 源码目录（解析为 skills/<name>/../../src）
+      type: "scripts"     # 顶层目录（必须在 directory_scope 白名单内）
+      to: "src"           # 子路径 → 完整路径为 scripts/src
     - from: "config.yaml"        # 项目根目录的配置文件
-      type: "scripts"
+      type: "scripts"             # → 完整路径为 scripts/config.yaml
 
   # 版本号读取配置（全局默认，可被 skill_version_overrides 覆盖）
   version_file: "__init__.py"  # 版本文件名称（相对于 skills/<name>/）

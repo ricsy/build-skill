@@ -33,7 +33,7 @@ class FileCopyRule(BaseModel):
     model_config = {"populate_by_name": True}
 
     def resolve_to(self) -> str:
-        """解析完整的目标路径：type/to（to 省略时用 from_）"""
+        """解析完整的目标路径：type/to（to 省略时为 type）"""
         if self.to:
             return f"{self.type}/{self.to}"
         return self.type

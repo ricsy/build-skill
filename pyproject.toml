@@ -14,7 +14,7 @@ dependencies = [
   "click==8.1.8",
   "pyyaml==6.0.2",
   "loguru==0.7.3",
-  "path-config>=0.1",
+  "mrconfig>=0.1",
 ]
 
 [tool.hatch.version]

@@ -5,7 +5,7 @@ from typing import Optional
 
 from pydantic import BaseModel, Field
 
-from path_config import load_config
+from mrconfig import load_config
 
 
 class DebugConfig(BaseModel):
@@ -88,7 +88,7 @@ class AppConfig(BaseModel):
         5. 包内默认配置（仅作为最后回退）
         """
         if path is not None:
-            from path_config.loaders import YamlLoader
+            from mrconfig.loaders import YamlLoader
 
             p = Path(path)
             if not p.exists():

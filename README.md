@@ -1,5 +1,7 @@
 # build-skill
 
+[Skill 标准](https://github.com/agentskills/agentskills/blob/main/docs/specification.mdx)
+
 将 `skills/<name>/` 打包为 `dist/<name>-YYYYMMDD-vX.X.X.tar.gz`
 
 * 支持的目录结构

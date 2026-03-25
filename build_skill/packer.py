@@ -11,6 +11,7 @@ from pathlib import Path
 
 from build_skill.config import FileCopyRule, PackConfig
 from build_skill.utils import get_version_from_file, warn
+from build_skill.validator import FileCopyRuleValidator
 
 
 @dataclass
@@ -71,7 +72,18 @@ class TarPacker(BasePacker):
             raise FileNotFoundError(f"SKILL.md 不存在: {skill_md}")
         shutil.copy2(skill_md, skill_build / "SKILL.md")
 
-        # 2. 根据 file_copy_rules 复制文件
+        # 2. 校验 file_copy_rules（type 必须在 directory_scope 内）
+        from build_skill.config import get_config
+        cfg = get_config()
+        validator = FileCopyRuleValidator(
+            self._config.file_copy_rules,
+            cfg.validation.directory_scope,
+        )
+        if not validator.validate(skill_dir):
+            issues = validator.get_issues()
+            raise ValueError(f"file_copy_rules 校验失败: {'; '.join(issues)}")
+
+        # 3. 根据 file_copy_rules 复制文件
         for rule in self._config.file_copy_rules:
             self._copy_rule(skill_dir, skill_build, rule)
 
@@ -128,18 +140,14 @@ class TarPacker(BasePacker):
         """根据 FileCopyRule 复制文件或目录
 
         - from: 源路径（相对于 skill_dir，支持 ..）
-        - to:   目标父目录（默认与 from 相同）
-                   例：from="src", to="scripts" → skill_build/scripts/src
-                   例：from="src", 无 to     → skill_build/src
+        - type: 顶层目录（必填，必须在 directory_scope 白名单内）
+        - to:   子路径（相对于 type），省略时使用 from_ 的名称
         - glob: 可选，from 为目录时过滤文件
         """
         # from 相对于 skills/<name>/ 的上两级（即项目根目录），避免写 ../../ 前缀
         from_path = skill_dir / ".." / ".." / rule.from_
-        # to 是父目录；无 to 时直接复制到 skill_build/from_
-        if rule.to:
-            to_parent = skill_build / rule.to
-        else:
-            to_parent = skill_build
+        # 使用 resolve_to() 获取完整目标路径
+        dest_path = skill_build / rule.resolve_to()
 
         if rule.glob:
             # from 是目录，glob 过滤其中的文件
@@ -147,33 +155,28 @@ class TarPacker(BasePacker):
             matches = glob.glob(pattern, recursive=False)
             for src in matches:
                 src_p = Path(src)
-                dest = to_parent / src_p.name
+                dest = dest_path / src_p.name
                 dest.parent.mkdir(parents=True, exist_ok=True)
                 if src_p.is_dir():
                     shutil.copytree(src_p, dest, dirs_exist_ok=True)
                 else:
                     shutil.copy2(src_p, dest)
         elif from_path.is_file():
-            dest = to_parent / from_path.name
+            dest = dest_path / from_path.name
             dest.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(from_path, dest)
         elif from_path.is_dir():
-            if rule.to:
-                dest = skill_build / rule.to
-            else:
-                dest = skill_build / from_path.name
+            dest_path.mkdir(parents=True, exist_ok=True)
 
-            dest.parent.mkdir(parents=True, exist_ok=True)
-
-            if dest.exists() and dest.is_dir():
-                # to 已存在目录：展开 from 内容直接合并进去
+            if dest_path.exists() and dest_path.is_dir():
+                # dest_path 已存在目录：展开 from 内容直接合并进去
                 for item in from_path.iterdir():
                     if item.is_dir():
-                        shutil.copytree(item, dest / item.name, dirs_exist_ok=True)
+                        shutil.copytree(item, dest_path / item.name, dirs_exist_ok=True)
                     else:
-                        shutil.copy2(item, dest / item.name)
+                        shutil.copy2(item, dest_path / item.name)
             else:
-                shutil.copytree(from_path, dest, dirs_exist_ok=True)
+                shutil.copytree(from_path, dest_path, dirs_exist_ok=True)
 
     def patch_config(self, config_path: Path) -> None:
         """使用正则行级替换修补 config.yaml，保留 YAML 注释"""

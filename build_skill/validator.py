@@ -6,7 +6,7 @@ from typing import Any, Optional
 
 from pydantic import BaseModel, Field, field_validator
 
-from build_skill.config import ValidationConfig
+from build_skill.config import FileCopyRule, ValidationConfig
 
 
 class BaseValidator:
@@ -99,3 +99,33 @@ class FrontmatterValidator(BaseValidator):
             raise ValueError("frontmatter 格式错误：未找到 --- 分隔符")
 
         return yaml.safe_load(match.group(1)) or {}
+
+
+class FileCopyRuleValidator(BaseValidator):
+    """file_copy_rules 校验器：校验 type 字段必须在 directory_scope 范围内"""
+
+    def __init__(
+        self,
+        file_copy_rules: list[FileCopyRule],
+        directory_scope: list[str],
+    ) -> None:
+        self._file_copy_rules = file_copy_rules
+        self._directory_scope = directory_scope
+        self._issues: list[str] = []
+
+    def validate(self, skill_dir: Path) -> bool:
+        """校验 file_copy_rules 中 type 字段是否在白名单内"""
+        self._issues = []
+
+        for i, rule in enumerate(self._file_copy_rules or []):
+            if rule.type not in self._directory_scope:
+                self._issues.append(
+                    f"file_copy_rules[{i}].type='{rule.type}' "
+                    f"不在允许范围内 "
+                    f"（directory_scope={self._directory_scope}）"
+                )
+
+        return len(self._issues) == 0
+
+    def get_issues(self) -> list[str]:
+        return self._issues.copy()

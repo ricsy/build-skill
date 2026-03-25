@@ -1,8 +1,8 @@
 """tests/test_validator.py"""
 
 import pytest
-from build_skill.validator import FrontmatterSchema, FrontmatterValidator
-from build_skill.config import ValidationConfig
+from build_skill.validator import FileCopyRuleValidator, FrontmatterSchema, FrontmatterValidator
+from build_skill.config import FileCopyRule, ValidationConfig
 
 
 def test_name_format_valid():
@@ -72,3 +72,76 @@ def test_frontmatter_validator_name_mismatch(tmp_path):
     passed = validator.validate(skill_dir)
     assert passed is False
     assert any("不匹配" in issue for issue in validator.get_issues())
+
+
+class TestFileCopyRuleValidator:
+    """FileCopyRuleValidator 测试"""
+
+    def test_type_in_scope_passes(self, tmp_path):
+        """type 在 directory_scope 内时校验通过"""
+        rules = [
+            FileCopyRule(from_="src", type="scripts", to="src"),
+            FileCopyRule(from_="docs", type="references", to="doc"),
+            FileCopyRule(from_="imgs", type="assets", to="images/logo.png"),
+        ]
+        validator = FileCopyRuleValidator(rules, ["scripts", "references", "assets"])
+        assert validator.validate(tmp_path) is True
+        assert validator.get_issues() == []
+
+    def test_type_out_of_scope_fails(self, tmp_path):
+        """type 不在 directory_scope 内时校验失败"""
+        rules = [FileCopyRule(from_="src", type="other")]
+        validator = FileCopyRuleValidator(rules, ["scripts", "references", "assets"])
+        assert validator.validate(tmp_path) is False
+        issues = validator.get_issues()
+        assert len(issues) == 1
+        assert "other" in issues[0]
+        assert "不在允许范围内" in issues[0]
+
+    def test_multiple_type_out_of_scope_fails(self, tmp_path):
+        """多个 type 都不在范围内时，全部报错"""
+        rules = [
+            FileCopyRule(from_="src", type="other"),
+            FileCopyRule(from_="docs", type="invalid"),
+        ]
+        validator = FileCopyRuleValidator(rules, ["scripts", "references", "assets"])
+        assert validator.validate(tmp_path) is False
+        issues = validator.get_issues()
+        assert len(issues) == 2
+
+    def test_type_required(self, tmp_path):
+        """type 为必填字段"""
+        # type 是必填的，验证 ValidationError
+        from pydantic import ValidationError
+        with pytest.raises(ValidationError):
+            FileCopyRule(from_="src")
+
+    def test_no_rules_passes(self, tmp_path):
+        """file_copy_rules 为空时校验通过"""
+        validator = FileCopyRuleValidator([], ["scripts", "references", "assets"])
+        assert validator.validate(tmp_path) is True
+        assert validator.get_issues() == []
+
+    def test_custom_directory_scope(self, tmp_path):
+        """自定义 directory_scope 生效"""
+        rules = [
+            FileCopyRule(from_="src", type="custom"),
+            FileCopyRule(from_="src", type="allowed"),
+        ]
+        validator = FileCopyRuleValidator(rules, ["custom", "allowed"])
+        assert validator.validate(tmp_path) is True
+
+        # 不在范围内的仍会失败
+        rules2 = [FileCopyRule(from_="src", type="forbidden")]
+        validator2 = FileCopyRuleValidator(rules2, ["custom", "allowed"])
+        assert validator2.validate(tmp_path) is False
+
+    def test_resolve_to_with_type_and_to(self, tmp_path):
+        """type + to 组合解析正确"""
+        rule = FileCopyRule(from_="src", type="scripts", to="lib")
+        assert rule.resolve_to() == "scripts/lib"
+
+    def test_resolve_to_with_type_only(self, tmp_path):
+        """仅有 type 时解析为 type 本身"""
+        rule = FileCopyRule(from_="src", type="scripts")
+        assert rule.resolve_to() == "scripts"

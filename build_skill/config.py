@@ -26,10 +26,17 @@ class FileCopyRule(BaseModel):
     """文件复制规则"""
 
     from_: str = Field(alias="from")
-    to: Optional[str] = None
+    type: str  # 顶层目录，必须在 directory_scope 白名单内
+    to: Optional[str] = None  # 子路径（相对于 type），默认为 from_
     glob: Optional[str] = None
 
     model_config = {"populate_by_name": True}
+
+    def resolve_to(self) -> str:
+        """解析完整的目标路径：type/to（to 省略时用 from_）"""
+        if self.to:
+            return f"{self.type}/{self.to}"
+        return self.type
 
 
 class SkillVersionConfig(BaseModel):
@@ -57,6 +64,7 @@ class ValidationConfig(BaseModel):
     desc_max_len: int = 1024
     compat_max_len: int = 500
     skill_file_max_lines: int = 500
+    directory_scope: list[str] = ["scripts", "references", "assets"]
 
 
 class AppConfig(BaseModel):

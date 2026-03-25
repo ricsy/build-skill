@@ -74,6 +74,7 @@ class TarPacker(BasePacker):
 
         # 2. 校验 file_copy_rules（type 必须在 directory_scope 内）
         from build_skill.config import get_config
+
         cfg = get_config()
         validator = FileCopyRuleValidator(
             self._config.file_copy_rules,

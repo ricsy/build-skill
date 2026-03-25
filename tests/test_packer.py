@@ -50,7 +50,11 @@ def test_copy_rule_dir_to_parent(tmp_path):
     )
     (skill_dir / "__init__.py").write_text("")
 
-    cfg = PackConfig(file_copy_rules=[FileCopyRule.model_validate({"from": "src", "type": "scripts", "to": "src"})])
+    cfg = PackConfig(
+        file_copy_rules=[
+            FileCopyRule.model_validate({"from": "src", "type": "scripts", "to": "src"})
+        ]
+    )
     packer = TarPacker(cfg)
     result = packer.pack("test-skill", str(tmp_path / "dist"), str(tmp_path / "skills"))
 
@@ -70,7 +74,9 @@ def test_copy_rule_dir_no_to(tmp_path):
     )
     (skill_dir / "__init__.py").write_text("")
 
-    cfg = PackConfig(file_copy_rules=[FileCopyRule.model_validate({"from": "src", "type": "scripts"})])
+    cfg = PackConfig(
+        file_copy_rules=[FileCopyRule.model_validate({"from": "src", "type": "scripts"})]
+    )
     packer = TarPacker(cfg)
     result = packer.pack("test-skill", str(tmp_path / "dist"), str(tmp_path / "skills"))
 
@@ -92,7 +98,13 @@ def test_copy_rule_dir_with_glob(tmp_path):
     )
     (skill_dir / "__init__.py").write_text("")
 
-    cfg = PackConfig(file_copy_rules=[FileCopyRule.model_validate({"from": "src", "type": "scripts", "to": "src", "glob": "*.py"})])
+    cfg = PackConfig(
+        file_copy_rules=[
+            FileCopyRule.model_validate(
+                {"from": "src", "type": "scripts", "to": "src", "glob": "*.py"}
+            )
+        ]
+    )
     packer = TarPacker(cfg)
     result = packer.pack("test-skill", str(tmp_path / "dist"), str(tmp_path / "skills"))
 
@@ -115,7 +127,9 @@ def test_copy_rule_file(tmp_path):
     )
     (skill_dir / "__init__.py").write_text("")
 
-    cfg = PackConfig(file_copy_rules=[FileCopyRule.model_validate({"from": "config.yaml", "type": "scripts"})])
+    cfg = PackConfig(
+        file_copy_rules=[FileCopyRule.model_validate({"from": "config.yaml", "type": "scripts"})]
+    )
     packer = TarPacker(cfg)
     result = packer.pack("test-skill", str(tmp_path / "dist"), str(tmp_path / "skills"))
 
@@ -141,7 +155,9 @@ def test_pack_excludes_pycache(tmp_path):
     (pycache_dir / "main.cpython-311.pyc").write_bytes(b"fake bytecode")
 
     cfg = PackConfig(
-        file_copy_rules=[FileCopyRule.model_validate({"from": "src", "type": "scripts", "to": "src"})],
+        file_copy_rules=[
+            FileCopyRule.model_validate({"from": "src", "type": "scripts", "to": "src"})
+        ],
         exclude_patterns=["__pycache__", "*.pyc"],
     )
     packer = TarPacker(cfg)

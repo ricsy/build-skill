@@ -82,7 +82,9 @@ class TestFileCopyRuleValidator:
         rules = [
             FileCopyRule.model_validate({"from": "src", "type": "scripts", "to": "src"}),
             FileCopyRule.model_validate({"from": "docs", "type": "references", "to": "doc"}),
-            FileCopyRule.model_validate({"from": "imgs", "type": "assets", "to": "images/logo.png"}),
+            FileCopyRule.model_validate(
+                {"from": "imgs", "type": "assets", "to": "images/logo.png"}
+            ),
         ]
         validator = FileCopyRuleValidator(rules, ["scripts", "references", "assets"])
         assert validator.validate(tmp_path) is True
@@ -113,6 +115,7 @@ class TestFileCopyRuleValidator:
         """type 为必填字段"""
         # type 是必填的，验证 ValidationError
         from pydantic import ValidationError
+
         with pytest.raises(ValidationError):
             FileCopyRule.model_validate({"from": "src"})
 

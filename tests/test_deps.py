@@ -62,10 +62,11 @@ def test_get_missing_packages_skips_empty_lines(tmp_path):
 def test_get_missing_packages_with_dashes(tmp_path):
     """横杠包名正确转换为下划线用于 import 检查"""
     req_file = tmp_path / "requirements.txt"
-    req_file.write_text("pydantic-settings>=2.0.0\n", encoding="utf-8")
+    # 使用一个确定不存在的包名（不可能有人会发布叫这个的包）
+    req_file.write_text("this-package-definitely-does-not-exist>=1.0.0\n", encoding="utf-8")
     missing = get_missing_packages(str(req_file))
-    # pydantic-settings 不存在，转换后 import pydantic_settings 失败
-    assert missing == ["pydantic-settings"]
+    # this-package-definitely-does-not-exist 不存在，转换后 import 也失败
+    assert missing == ["this-package-definitely-does-not-exist"]
 
 
 def test_get_missing_packages_mixed_format(tmp_path):

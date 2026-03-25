@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "build-skill"
-version = "1.0.3"
+dynamic = ["version"]
 description = "Package skills into distributable tarballs"
 readme = "README.md"
 license = {file = "LICENSE"}
@@ -15,6 +15,10 @@ dependencies = [
   "pyyaml==6.0.2",
   "loguru==0.7.3",
 ]
+
+[tool.hatch.version]
+source = "code"
+path = "build_skill/__init__.py"
 
 [project.optional-dependencies]
 dev = [

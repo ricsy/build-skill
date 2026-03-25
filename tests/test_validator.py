@@ -80,9 +80,9 @@ class TestFileCopyRuleValidator:
     def test_type_in_scope_passes(self, tmp_path):
         """type 在 directory_scope 内时校验通过"""
         rules = [
-            FileCopyRule(from_="src", type="scripts", to="src"),
-            FileCopyRule(from_="docs", type="references", to="doc"),
-            FileCopyRule(from_="imgs", type="assets", to="images/logo.png"),
+            FileCopyRule.model_validate({"from": "src", "type": "scripts", "to": "src"}),
+            FileCopyRule.model_validate({"from": "docs", "type": "references", "to": "doc"}),
+            FileCopyRule.model_validate({"from": "imgs", "type": "assets", "to": "images/logo.png"}),
         ]
         validator = FileCopyRuleValidator(rules, ["scripts", "references", "assets"])
         assert validator.validate(tmp_path) is True
@@ -90,7 +90,7 @@ class TestFileCopyRuleValidator:
 
     def test_type_out_of_scope_fails(self, tmp_path):
         """type 不在 directory_scope 内时校验失败"""
-        rules = [FileCopyRule(from_="src", type="other")]
+        rules = [FileCopyRule.model_validate({"from": "src", "type": "other"})]
         validator = FileCopyRuleValidator(rules, ["scripts", "references", "assets"])
         assert validator.validate(tmp_path) is False
         issues = validator.get_issues()
@@ -101,8 +101,8 @@ class TestFileCopyRuleValidator:
     def test_multiple_type_out_of_scope_fails(self, tmp_path):
         """多个 type 都不在范围内时，全部报错"""
         rules = [
-            FileCopyRule(from_="src", type="other"),
-            FileCopyRule(from_="docs", type="invalid"),
+            FileCopyRule.model_validate({"from": "src", "type": "other"}),
+            FileCopyRule.model_validate({"from": "docs", "type": "invalid"}),
         ]
         validator = FileCopyRuleValidator(rules, ["scripts", "references", "assets"])
         assert validator.validate(tmp_path) is False
@@ -114,7 +114,7 @@ class TestFileCopyRuleValidator:
         # type 是必填的，验证 ValidationError
         from pydantic import ValidationError
         with pytest.raises(ValidationError):
-            FileCopyRule(from_="src")
+            FileCopyRule.model_validate({"from": "src"})
 
     def test_no_rules_passes(self, tmp_path):
         """file_copy_rules 为空时校验通过"""
@@ -125,14 +125,14 @@ class TestFileCopyRuleValidator:
     def test_custom_directory_scope(self, tmp_path):
         """自定义 directory_scope 生效"""
         rules = [
-            FileCopyRule(from_="src", type="custom"),
-            FileCopyRule(from_="src", type="allowed"),
+            FileCopyRule.model_validate({"from": "src", "type": "custom"}),
+            FileCopyRule.model_validate({"from": "src", "type": "allowed"}),
         ]
         validator = FileCopyRuleValidator(rules, ["custom", "allowed"])
         assert validator.validate(tmp_path) is True
 
         # 不在范围内的仍会失败
-        rules2 = [FileCopyRule(from_="src", type="forbidden")]
+        rules2 = [FileCopyRule.model_validate({"from": "src", "type": "forbidden"})]
         validator2 = FileCopyRuleValidator(rules2, ["custom", "allowed"])
         assert validator2.validate(tmp_path) is False
 

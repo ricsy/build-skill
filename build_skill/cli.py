@@ -5,11 +5,11 @@ from pathlib import Path
 
 import typer
 
-from build_skill.config import AppConfig, get_config  # noqa: E402
-from build_skill.deps import check_dependencies  # noqa: E402
-from build_skill.packer import TarPacker  # noqa: E402
-from build_skill.utils import error, info, warn, resolve_skill_name, success  # noqa: E402
-from build_skill.validator import FrontmatterValidator  # noqa: E402
+from build_skill.config import AppConfig, get_config
+from build_skill.deps import check_dependencies
+from build_skill.packer import TarPacker
+from build_skill.utils import error, info, warn, resolve_skill_name, success
+from build_skill.validator import FrontmatterValidator
 
 # 设置 stdout/stderr 编码为 UTF-8
 sys.stdout.reconfigure(encoding="utf-8")

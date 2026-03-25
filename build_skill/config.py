@@ -1,10 +1,11 @@
 """配置加载模块"""
 
 from pathlib import Path
-from typing import Any, Optional
+from typing import Optional
 
-import yaml
 from pydantic import BaseModel, Field
+
+from path_config import load_config
 
 
 class DebugConfig(BaseModel):
@@ -86,42 +87,22 @@ class AppConfig(BaseModel):
         4. XDG 配置目录（Linux: ~/.config/build-skill/config.yaml）
         5. 包内默认配置（仅作为最后回退）
         """
-        import os
-
-        def _load_yaml(p: Path) -> Optional[dict[str, Any]]:
-            """从指定路径加载 YAML 文件"""
-            if p.exists():
-                return yaml.safe_load(p.read_text(encoding="utf-8")) or {}
-            return None
-
-        # 优先级 1：显式指定
         if path is not None:
+            from path_config.loaders import YamlLoader
+
             p = Path(path)
-            data = _load_yaml(p)
-            if data is not None:
-                return cls.model_validate(data)
-            raise FileNotFoundError(f"配置文件不存在: {p}")
-
-        # 优先级 2：环境变量
-        env_path = os.environ.get("BUILD_SKILL_CONFIG")
-        if env_path:
-            data = _load_yaml(Path(env_path))
-            if data is not None:
-                return cls.model_validate(data)
-
-        # 优先级 3：当前目录
-        data = _load_yaml(Path(".build_skill.yaml"))
-        if data is not None:
+            if not p.exists():
+                raise FileNotFoundError(f"配置文件不存在: {p}")
+            data = YamlLoader().load(str(p))
             return cls.model_validate(data)
 
-        # 优先级 4：XDG 配置目录
-        xdg_path = Path(os.path.expanduser("~/.config/build-skill/config.yaml"))
-        data = _load_yaml(xdg_path)
-        if data is not None:
-            return cls.model_validate(data)
-
-        # 优先级 5：包内默认配置
-        return cls.model_validate({})
+        data = load_config(
+            name=".build_skill.yaml",
+            xdg="build-skill/config.yaml",
+            env="BUILD_SKILL_CONFIG",
+            default={},
+        )
+        return cls.model_validate(data)
 
 
 _config: Optional[AppConfig] = None

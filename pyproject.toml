@@ -53,5 +53,5 @@ disallow_untyped_defs = false
 disable_error_code = ["no-untyped-def"]
 
 [[tool.mypy.overrides]]
-module = "build_skill/cli.py"
-disable_error_code = ["untyped-decorator"]
+module = "build_skill.cli"
+disable_error_code = ["untyped-decorator", "union-attr"]

@@ -12,8 +12,8 @@ from build_skill.utils import error, info, warn, resolve_skill_name, success  # 
 from build_skill.validator import FrontmatterValidator  # noqa: E402
 
 # 设置 stdout/stderr 编码为 UTF-8
-sys.stdout.reconfigure(encoding="utf-8")  # type: ignore[union-attr]
-sys.stderr.reconfigure(encoding="utf-8")  # type: ignore[union-attr]
+sys.stdout.reconfigure(encoding="utf-8")
+sys.stderr.reconfigure(encoding="utf-8")
 
 app = typer.Typer(
     help="将 skills/<name>/ 打包为 dist/<name>-YYYYMMDD-vX.X.X.tar.gz",
@@ -21,7 +21,7 @@ app = typer.Typer(
 )
 
 
-@app.command()  # type: ignore[untyped-decorator]
+@app.command()
 def main(
     name: str = typer.Option(None, "--name", help="指定 skill 名称（逗号分隔多个，或 all）"),
     output: str = typer.Option("dist", "--output", help="指定输出目录"),
